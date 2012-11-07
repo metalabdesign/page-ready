@@ -146,8 +146,11 @@ void usage()
   fprintf(stderr, "            No output.\n\n");
   fprintf(stderr, "        --verbose\n");
   fprintf(stderr, "            More detailed output.\n\n");
+  fprintf(stderr, "        --version\n");
+  fprintf(stderr, "            Show version number and quit.\n\n");
   fprintf(stderr, "    Examples:\n");
   fprintf(stderr, "        %s http://google.com\n\n", prog);
+  fprintf(stderr, "        %s -c \"someFunc()\" -c \"anotherFunc()\" -c \"thirdFunc()\" http://wesbos.com http://darcyclarke.me\n\n", prog);
   fprintf(stderr, "        %s -c \"document.readyState == 'complete'\" -t 2.5 http://gf3.ca\n\n", prog);
   fprintf(stderr, "        %s --verbose -c \"`cat ./yourFile.js`\" http://metalabdesign.com\n", prog);
   
