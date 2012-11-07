@@ -7,9 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4122A42E1649E1BF004CECF5 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4122A42D1649E1BF004CECF5 /* JavaScriptCore.framework */; };
+		4155FC471648B4C000EC91A8 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4155FC461648B4C000EC91A8 /* WebKit.framework */; };
 		417C4107164776F300B0F25B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 417C4106164776F300B0F25B /* Foundation.framework */; };
 		417C410A164776F300B0F25B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 417C4109164776F300B0F25B /* main.m */; };
 		417C410E164776F300B0F25B /* page_ready.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 417C410D164776F300B0F25B /* page_ready.1 */; };
+		417C41191647774E00B0F25B /* GCAnalyzer.m in Sources */ = {isa = PBXBuildFile; fileRef = 417C41161647774E00B0F25B /* GCAnalyzer.m */; };
+		417C411A1647774E00B0F25B /* GCCondition.m in Sources */ = {isa = PBXBuildFile; fileRef = 417C41181647774E00B0F25B /* GCCondition.m */; };
+		417C416D16487EBC00B0F25B /* NSString+Squisher.m in Sources */ = {isa = PBXBuildFile; fileRef = 417C416C16487EBC00B0F25B /* NSString+Squisher.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,11 +31,20 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4122A42D1649E1BF004CECF5 /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = /Applications/WebKit.app/Contents/Frameworks/10.8/JavaScriptCore.framework; sourceTree = "<absolute>"; };
+		4155FC461648B4C000EC91A8 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = /Applications/WebKit.app/Contents/Frameworks/10.8/WebKit.framework; sourceTree = "<absolute>"; };
 		417C4102164776F300B0F25B /* page-ready */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "page-ready"; sourceTree = BUILT_PRODUCTS_DIR; };
 		417C4106164776F300B0F25B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		417C4109164776F300B0F25B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		417C410C164776F300B0F25B /* page-ready-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "page-ready-Prefix.pch"; sourceTree = "<group>"; };
 		417C410D164776F300B0F25B /* page_ready.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = page_ready.1; sourceTree = "<group>"; };
+		417C41141647774E00B0F25B /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		417C41151647774E00B0F25B /* GCAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCAnalyzer.h; sourceTree = "<group>"; };
+		417C41161647774E00B0F25B /* GCAnalyzer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCAnalyzer.m; sourceTree = "<group>"; };
+		417C41171647774E00B0F25B /* GCCondition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCCondition.h; sourceTree = "<group>"; };
+		417C41181647774E00B0F25B /* GCCondition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCCondition.m; sourceTree = "<group>"; };
+		417C416B16487EBC00B0F25B /* NSString+Squisher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Squisher.h"; sourceTree = "<group>"; };
+		417C416C16487EBC00B0F25B /* NSString+Squisher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Squisher.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,6 +53,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				417C4107164776F300B0F25B /* Foundation.framework in Frameworks */,
+				4122A42E1649E1BF004CECF5 /* JavaScriptCore.framework in Frameworks */,
+				4155FC471648B4C000EC91A8 /* WebKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,7 +68,9 @@
 				417C4105164776F300B0F25B /* Frameworks */,
 				417C4103164776F300B0F25B /* Products */,
 			);
+			indentWidth = 2;
 			sourceTree = "<group>";
+			tabWidth = 2;
 		};
 		417C4103164776F300B0F25B /* Products */ = {
 			isa = PBXGroup;
@@ -65,6 +83,8 @@
 		417C4105164776F300B0F25B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4122A42D1649E1BF004CECF5 /* JavaScriptCore.framework */,
+				4155FC461648B4C000EC91A8 /* WebKit.framework */,
 				417C4106164776F300B0F25B /* Foundation.framework */,
 			);
 			name = Frameworks;
@@ -74,6 +94,13 @@
 			isa = PBXGroup;
 			children = (
 				417C4109164776F300B0F25B /* main.m */,
+				417C41141647774E00B0F25B /* common.h */,
+				417C41151647774E00B0F25B /* GCAnalyzer.h */,
+				417C41161647774E00B0F25B /* GCAnalyzer.m */,
+				417C41171647774E00B0F25B /* GCCondition.h */,
+				417C41181647774E00B0F25B /* GCCondition.m */,
+				417C416B16487EBC00B0F25B /* NSString+Squisher.h */,
+				417C416C16487EBC00B0F25B /* NSString+Squisher.m */,
 				417C410D164776F300B0F25B /* page_ready.1 */,
 				417C410B164776F300B0F25B /* Supporting Files */,
 			);
@@ -114,8 +141,9 @@
 		417C40F9164776F300B0F25B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				CLASSPREFIX = GC;
 				LastUpgradeCheck = 0450;
-				ORGANIZATIONNAME = "Gianni Chiappetta";
+				ORGANIZATIONNAME = MetaLab;
 			};
 			buildConfigurationList = 417C40FC164776F300B0F25B /* Build configuration list for PBXProject "page-ready" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -140,6 +168,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				417C410A164776F300B0F25B /* main.m in Sources */,
+				417C41191647774E00B0F25B /* GCAnalyzer.m in Sources */,
+				417C411A1647774E00B0F25B /* GCCondition.m in Sources */,
+				417C416D16487EBC00B0F25B /* NSString+Squisher.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -202,6 +233,11 @@
 		417C4112164776F300B0F25B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Frameworks\"",
+					"\"$(LOCAL_APPS_DIR)/WebKit.app/Contents/Frameworks/10.8\"",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "page-ready/page-ready-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -211,6 +247,11 @@
 		417C4113164776F300B0F25B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Frameworks\"",
+					"\"$(LOCAL_APPS_DIR)/WebKit.app/Contents/Frameworks/10.8\"",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "page-ready/page-ready-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -236,6 +277,7 @@
 				417C4113164776F300B0F25B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
