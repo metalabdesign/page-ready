@@ -23,6 +23,7 @@ static struct option longOptions[] = {
   {"help",      no_argument,       0, 'h'},
   {"condition", required_argument, 0, 'c'},
   {"timeout",   required_argument, 0, 't'},
+  {"version",   no_argument,       0, 0},
   {0, 0, 0, 0}
 };
 BOOL shouldKeepRunning = YES;
@@ -53,7 +54,14 @@ int main(int argc, const char **argv)
     
     switch (c) {
       case 0:
-        // All long options have short counterparts
+        if (longOptions[optionIndex].flag != 0)
+          break;
+        
+        if (strcasecmp("version", longOptions[optionIndex].name) == 0) {
+          printf("%s %s\n", prog, PAGE_READY_VERSION);
+          exit(EXIT_SUCCESS);
+        }
+        
         break;
         
       case 'h':
