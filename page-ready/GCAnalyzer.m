@@ -179,15 +179,15 @@ Boolean GC_is_thruthy(const void *result)
     printf(UNDERLINE_ON "Resources"  UNDERLINE_OFF "\n");
     if ([resources count]) {
       for (id key in resources) {
-        NSDictionary *resource = [resources objectForKey:key];
-        NSString *url = ((NSURLRequest *)[resource objectForKey:@"request"]).URL.absoluteString;
-        NSError *error = [resource objectForKey:@"error"];
+        GCResource *resource = [resources objectForKey:key];
+        NSString *url = resource.request.URL.absoluteString;
+        NSError *error = resource.error;
         
         if (error != nil)
           printf("\t" COLOR_RED STRING_FAIL " %s" COLOR_RESET "\t%s\t%s\n",
                  [[error domain] UTF8String], [[url squishToLength:SQUISH_LENGTH] UTF8String], [[error localizedDescription] UTF8String]);
         else {
-          NSTimeInterval interval = [[resource objectForKey:@"finish"] timeIntervalSinceDate:[resource objectForKey:@"start"]];
+          NSTimeInterval interval = [resource.finish timeIntervalSinceDate:resource.start];
           printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec\t%s\n",
                  interval, [[url squishToLength:SQUISH_LENGTH] UTF8String]);
         }
@@ -199,12 +199,12 @@ Boolean GC_is_thruthy(const void *result)
     // Exceptions
     printf(UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\n");
     if ([exceptions count]) {
-      for (NSDictionary *exception in exceptions) {
+      for (GCException *exception in exceptions) {
         printf("\t" COLOR_RED STRING_FAIL COLOR_RESET " %s %s:%d\tWas%s caught\n",
-               [[exception objectForKey:@"exception"] UTF8String],
-               [[exception objectForKey:@"functionName"] UTF8String],
-               [[exception objectForKey:@"lineno"] intValue],
-               [[exception objectForKey:@"hasHandler"] boolValue] ? "" : " not");
+               [exception.exception UTF8String],
+               [exception.functionName UTF8String],
+               exception.lineno,
+               exception.hasHandler ? "" : " not");
       }
     }
     else
@@ -270,10 +270,11 @@ Boolean GC_is_thruthy(const void *result)
 
 - (NSURLRequest *)webView:(WebView *)sender resource:(id)identifier willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse fromDataSource:(WebDataSource *)dataSource
 {
-  NSMutableDictionary *dict = [NSMutableDictionary
-                               dictionaryWithObjects:@[request,    [NSDate date]]
-                                             forKeys:@[@"request", @"start"]];
-  [resources setObject:dict forKey:identifier];
+  GCResource *resource = [GCResource new];
+  resource.id      = identifier;
+  resource.request = request;
+  resource.start   = [NSDate date];
+  [resources setObject:resource forKey:identifier];
   
   [self printStatus:webViewProgress];
   
@@ -282,26 +283,25 @@ Boolean GC_is_thruthy(const void *result)
 
 - (void)webView:(WebView *)sender resource:(id)identifier didFinishLoadingFromDataSource:(WebDataSource *)dataSource
 {
-  NSMutableDictionary *res = [resources objectForKey:identifier];
-  [res setObject:[NSDate date] forKey:@"finish"];
+  GCResource *resource = [resources objectForKey:identifier];
+  resource.finish = [NSDate date];
   resourceLoaded++;
   
   [self printStatus:webViewProgress];
-  [self performSelector:@selector(resourcesMaybeFinishedLoading:) withObject:nil afterDelay:0.5];
+  [self performSelector:@selector(resourcesMaybeFinishedLoading) withObject:nil afterDelay:0.5];
 }
 
 - (void)webView:(WebView *)sender resource:(id)identifier didFailLoadingWithError:(NSError *)error fromDataSource:(WebDataSource *)dataSource
 {
-//  NSLog(@"FAILED: %@", error);
   resourceFailed++;
-  NSMutableDictionary *res = [resources objectForKey:identifier];
-  [res setObject:error forKey:@"error"];
+  GCResource *resource = [resources objectForKey:identifier];
+  resource.error = error;
 }
 
-- (void)resourcesMaybeFinishedLoading:(NSNumber *)obj
+- (void)resourcesMaybeFinishedLoading
 {
-  if ((resourceLoaded + resourceFailed) != resourceID && (obj == nil || [obj intValue] < 1000)) // XXX Retry for up to 5 seconds
-    [self performSelector:@selector(resourcesMaybeFinishedLoading:) withObject:[NSNumber numberWithInt:[obj intValue] + 1] afterDelay:0.5];
+  if ((resourceLoaded + resourceFailed) != resourceID)
+    [self performSelector:@selector(resourcesMaybeFinishedLoading) withObject:nil afterDelay:0.5];
   else {
     state |= GC_state_resources_loaded;
     [self maybeFinish];
@@ -313,26 +313,28 @@ Boolean GC_is_thruthy(const void *result)
 
 - (void)webView:(WebView *)sender didClearWindowObject:(WebScriptObject *)windowObject forFrame:(WebFrame *)frame
 {
-//  if (jsDebugging)
-  [sender setScriptDebugDelegate:self];
+  if (jsDebugging)
+    [sender setScriptDebugDelegate:self];
 }
 
 - (void)webView:(WebView *)webView exceptionWasRaised:(WebScriptCallFrame *)frame hasHandler:(BOOL)hasHandler sourceId:(WebSourceId)sid line:(int)lineno forWebFrame:(WebFrame *)webFrame
 {
-  NSMutableDictionary *exception = [NSMutableDictionary dictionaryWithCapacity:6];
-  if ([frame caller])
-    [exception setObject:[frame caller] forKey:@"caller"];
-  if ([frame exception]) {
+  GCException *exception = [GCException new];
+  exception.caller       = [frame caller];
+  exception.functionName = [frame functionName];
+  exception.hasHandler   = hasHandler;
+  exception.lineno       = lineno;
+  exception.sid          = sid;
+  
+  if (JSValueIsObject(JSGlobalContextCreate(NULL), [[frame exception] JSObject])) {
     [[webFrame windowObject] setValue:[frame exception] forKey:@"__GC_frame_exception"];
     id objectRef = [[webFrame windowObject] evaluateWebScript:@"__GC_frame_exception.constructor.name"];
     [[webFrame windowObject] setValue:nil forKey:@"__GC_frame_exception"];
-    [exception setObject:objectRef forKey:@"exception"];
+    exception.exception = objectRef;
   }
-  if([frame functionName])
-    [exception setObject:[frame functionName] forKey:@"functionName"];
-  [exception setObject:[NSNumber numberWithBool:hasHandler] forKey:@"hasHandler"];
-  [exception setObject:@(lineno) forKey:@"lineno"];
-  [exception setObject:@(sid) forKey:@"sid"];
+  else {
+    exception.exception = [frame exception];
+  }
 
   exceptionCount++;
   exceptions = [exceptions arrayByAddingObject:exception];

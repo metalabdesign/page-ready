@@ -14,6 +14,8 @@
 #import <WebKit/WebScriptDebugDelegate.h>
 #import "common.h"
 #import "GCCondition.h"
+#import "GCException.h"
+#import "GCResource.h"
 #import "NSString+Squisher.h"
 
 typedef enum {
