@@ -184,7 +184,7 @@ Boolean GC_is_thruthy(const void *result)
         NSTimeInterval interval = [[resource objectForKey:@"finish"] timeIntervalSinceDate:[resource objectForKey:@"start"]];
         NSString *url = ((NSURLRequest *)[resource objectForKey:@"request"]).URL.absoluteString;
         printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec\t%s\n",
-               interval, [[url squishToLength:63] UTF8String]);
+               interval, [[url squishToLength:SQUISH_LENGTH] UTF8String]);
       }
     }
     else
@@ -207,7 +207,7 @@ Boolean GC_is_thruthy(const void *result)
     if ([_conditions count]) {
       for (GCCondition *condition in _conditions) {
         char *met = condition.met ? COLOR_GREEN STRING_SUCCESS : COLOR_RED STRING_FAIL;
-        printf("\t%s" COLOR_RESET " %f sec\t%s\n", met, condition.interval, [[[condition expr] squishToLength:63] UTF8String]);
+        printf("\t%s" COLOR_RESET " %f sec\t%s\n", met, condition.interval, [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
       }
     }
     else

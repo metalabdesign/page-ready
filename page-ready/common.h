@@ -30,6 +30,8 @@
 #define STRING_INFO    "ℹ"
 #define STRING_SUCCESS "✔"
 
+#define SQUISH_LENGTH  80
+
 #define VAL(x) #x
 #define STRINGIFY(x) VAL(x)
 
