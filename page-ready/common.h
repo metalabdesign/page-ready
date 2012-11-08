@@ -15,6 +15,7 @@
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
+#define COLOR_GREY    "\x1b[90m"
 #define COLOR_YELLOW  "\x1b[33m"
 #define COLOR_BLUE    "\x1b[34m"
 #define COLOR_MAGENTA "\x1b[35m"
@@ -31,6 +32,7 @@
 #define STRING_FAIL    "✖"
 #define STRING_INFO    "ℹ"
 #define STRING_SUCCESS "✔"
+#define STRING_INDENT  "    "
 
 #define SQUISH_LENGTH  80
 

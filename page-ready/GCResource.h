@@ -25,6 +25,6 @@
 @property (retain) NSURLRequest *request;
 @property (retain) NSDate       *start;
 
-- (NSString *)humanReadableContentLength;
+- (NSArray *)humanReadableContentLength;
 
 @end

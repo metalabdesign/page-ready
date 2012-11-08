@@ -173,7 +173,8 @@ Boolean GC_is_thruthy(const void *result)
   }
   else {
     printf(UNDERLINE_ON "Page Load"  UNDERLINE_OFF "\n");
-    printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec\n", [loadEnd timeIntervalSinceDate:loadStart]);
+    printf(STRING_INDENT COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f" COLOR_GREY "sec" COLOR_RESET "\n",
+           [loadEnd timeIntervalSinceDate:loadStart]);
     
     // Resources
     printf(UNDERLINE_ON "Resources"  UNDERLINE_OFF "\n");
@@ -184,49 +185,57 @@ Boolean GC_is_thruthy(const void *result)
         NSError *error = resource.error;
         
         if (error != nil)
-          printf("\t" COLOR_RED STRING_FAIL " %s" COLOR_RESET "\t%s\t%s\n",
-                 [[error domain] UTF8String], [[url squishToLength:SQUISH_LENGTH] UTF8String], [[error localizedDescription] UTF8String]);
+          printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-16s %9s %-*s %s\n",
+                 [[error domain] UTF8String],
+                 " ",
+                 SQUISH_LENGTH + 3,
+                 [[url squishToLength:SQUISH_LENGTH] UTF8String],
+                 [[error localizedDescription] UTF8String]);
         else {
-          NSTimeInterval interval = [resource.finish timeIntervalSinceDate:resource.start];
-          printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec [%s]\t%s\n",
+          char interval[24];
+          sprintf(interval, "%.5f" COLOR_GREY "sec" COLOR_RESET, [resource.finish timeIntervalSinceDate:resource.start]);
+          NSArray *size = [resource humanReadableContentLength];
+          printf(STRING_INDENT COLOR_GREEN STRING_SUCCESS COLOR_RESET " %-26s %6s" COLOR_GREY "%-2s" COLOR_RESET " %-*s\n",
                  interval,
-                 [[resource humanReadableContentLength] UTF8String],
+                 [[size objectAtIndex:0] UTF8String],
+                 [[size objectAtIndex:1] UTF8String],
+                 SQUISH_LENGTH + 3,
                  [[url squishToLength:SQUISH_LENGTH] UTF8String]);
         }
       }
     }
     else
-      printf("\t" COLOR_BLUE STRING_INFO COLOR_RESET " No resources\n");
+      printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No resources\n");
     
     // Exceptions
     printf(UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\n");
     if ([exceptions count]) {
       for (GCException *exception in exceptions) {
-        printf("\t" COLOR_RED STRING_FAIL COLOR_RESET " %s %s:%d\tWas%s caught\n",
+        printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-16s %10s %s:%d\n",
                [exception.exception UTF8String],
+               exception.hasHandler ? "(caught)" : "(uncaught)",
                [exception.functionName UTF8String],
-               exception.lineno,
-               exception.hasHandler ? "" : " not");
+               exception.lineno);
       }
     }
     else
-      printf("\t" COLOR_BLUE STRING_INFO COLOR_RESET " No exceptions\n");
+      printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No exceptions\n");
     
     // Conditions
     printf(UNDERLINE_ON "Conditions" UNDERLINE_OFF "\n");
     if ([_conditions count]) {
       for (GCCondition *condition in _conditions) {
         char *met = condition.met ? COLOR_GREEN STRING_SUCCESS : COLOR_RED STRING_FAIL;
-        printf("\t%s" COLOR_RESET " ", met);
+        printf(STRING_INDENT "%s" COLOR_RESET " ", met);
         if (condition.met)
-          printf("%f sec", condition.interval);
+          printf("%f" COLOR_GREY "sec" COLOR_RESET, condition.interval);
         else
           printf(COLOR_RED "TIMEOUT" COLOR_RESET);
-        printf("\t%s\n", [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
+        printf("  %s\n", [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
       }
     }
     else
-      printf("\t" COLOR_BLUE STRING_INFO COLOR_RESET " No conditions\n");
+      printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No conditions\n");
   }
   printf("\n");
 }

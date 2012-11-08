@@ -6,23 +6,24 @@
 //  Copyright (c) 2012 MetaLab. All rights reserved.
 //
 
+#import "common.h"
 #import "GCResource.h"
 
 @implementation GCResource
 
 @synthesize contentLength, error, finish, id, request, start;
 
-- (NSString *)humanReadableContentLength
+- (NSArray *)humanReadableContentLength
 {
   if (!contentLength)
-    return @"null";
+    return @[@"0.00", @"B"];
 
-  char *units[] = {"", "KB", "MB", "GB", "TB", "PB"};
+  char *units[] = {"B", "KB", "MB", "GB", "TB", "PB"};
   int e = floor(log(contentLength) / log(1024));
   char amount[12];
-  sprintf(amount, "%1.2f%s", contentLength / pow(1024, e), units[e]);
+  sprintf(amount, "%1.2f", contentLength / pow(1024, e));
   
-  return [NSString stringWithUTF8String:amount];
+  return [NSArray arrayWithObjects:@(amount), @(units[e]), nil];
 }
 
 @end
