@@ -12,6 +12,12 @@ Prerequisites
 This tool depends on the frameworks in [WebKit Nightly](http://nightly.webkit.org), so be sure to have it downloaded and installed before use.
 
 
+Downloading
+-----------
+
+With each release a new binary is uploaded and can be found in the [downloads section](https://github.com/metalabdesign/page-ready/downloads).
+
+
 Compiling
 ---------
 
