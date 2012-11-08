@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		4122A42E1649E1BF004CECF5 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4122A42D1649E1BF004CECF5 /* JavaScriptCore.framework */; };
+		4122A432164B3DC3004CECF5 /* GCException.m in Sources */ = {isa = PBXBuildFile; fileRef = 4122A431164B3DC2004CECF5 /* GCException.m */; };
+		4122A435164B3FC8004CECF5 /* GCResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 4122A434164B3FC8004CECF5 /* GCResource.m */; };
 		4155FC471648B4C000EC91A8 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4155FC461648B4C000EC91A8 /* WebKit.framework */; };
 		417C4107164776F300B0F25B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 417C4106164776F300B0F25B /* Foundation.framework */; };
 		417C410A164776F300B0F25B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 417C4109164776F300B0F25B /* main.m */; };
@@ -32,6 +34,10 @@
 
 /* Begin PBXFileReference section */
 		4122A42D1649E1BF004CECF5 /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = /Applications/WebKit.app/Contents/Frameworks/10.8/JavaScriptCore.framework; sourceTree = "<absolute>"; };
+		4122A430164B3DC2004CECF5 /* GCException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCException.h; sourceTree = "<group>"; };
+		4122A431164B3DC2004CECF5 /* GCException.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCException.m; sourceTree = "<group>"; };
+		4122A433164B3FC8004CECF5 /* GCResource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCResource.h; sourceTree = "<group>"; };
+		4122A434164B3FC8004CECF5 /* GCResource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCResource.m; sourceTree = "<group>"; };
 		4155FC461648B4C000EC91A8 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = /Applications/WebKit.app/Contents/Frameworks/10.8/WebKit.framework; sourceTree = "<absolute>"; };
 		417C4102164776F300B0F25B /* page-ready */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "page-ready"; sourceTree = BUILT_PRODUCTS_DIR; };
 		417C4106164776F300B0F25B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -99,6 +105,10 @@
 				417C41161647774E00B0F25B /* GCAnalyzer.m */,
 				417C41171647774E00B0F25B /* GCCondition.h */,
 				417C41181647774E00B0F25B /* GCCondition.m */,
+				4122A430164B3DC2004CECF5 /* GCException.h */,
+				4122A431164B3DC2004CECF5 /* GCException.m */,
+				4122A433164B3FC8004CECF5 /* GCResource.h */,
+				4122A434164B3FC8004CECF5 /* GCResource.m */,
 				417C416B16487EBC00B0F25B /* NSString+Squisher.h */,
 				417C416C16487EBC00B0F25B /* NSString+Squisher.m */,
 				417C410D164776F300B0F25B /* page_ready.1 */,
@@ -171,6 +181,8 @@
 				417C41191647774E00B0F25B /* GCAnalyzer.m in Sources */,
 				417C411A1647774E00B0F25B /* GCCondition.m in Sources */,
 				417C416D16487EBC00B0F25B /* NSString+Squisher.m in Sources */,
+				4122A432164B3DC3004CECF5 /* GCException.m in Sources */,
+				4122A435164B3FC8004CECF5 /* GCResource.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
