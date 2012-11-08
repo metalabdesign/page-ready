@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 Gianni Chiappetta. All rights reserved.
 //
 
+#import <stdio.h>
 #import <string.h>
 #import <getopt.h>
 #import <libgen.h>
@@ -96,6 +97,19 @@ int main(int argc, const char **argv)
   
   while (optind < argc)
     [urls addObject:@(argv[optind++])];
+  
+  // Do we have a pipe?
+  if (!isatty(fileno(stdin))) {
+    NSFileHandle *input = [NSFileHandle fileHandleWithStandardInput];
+    NSData *inputData = [NSData dataWithData:[input readDataToEndOfFile]];
+    NSString *inputString = [[NSString alloc] initWithData:inputData encoding:NSUTF8StringEncoding];
+    GCCondition *condition = [GCCondition new];
+    condition.attempts = @0;
+    condition.expr = inputString;
+    condition.interval = 0.0;
+    condition.met = NO;
+    [conditions addObject:condition];
+  }
   
   // Go
   @autoreleasepool {

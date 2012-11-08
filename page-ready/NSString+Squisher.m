@@ -12,12 +12,14 @@
 
 - (NSString *)squishToLength:(NSUInteger)length
 {
-  if (self.length <= length)
-    return self;
+  NSString *stripped = [self stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+  
+  if (stripped.length <= length)
+    return stripped;
   else {
     NSUInteger size = (length - 3) / 2;
-    NSString *start = [self substringToIndex:size];
-    NSString *end = [self substringFromIndex:self.length - size];
+    NSString *start = [stripped substringToIndex:size];
+    NSString *end   = [stripped substringFromIndex:stripped.length - size];
     return [NSString stringWithFormat:@"%@...%@", start, end];
   }
 }
