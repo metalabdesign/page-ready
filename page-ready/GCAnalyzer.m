@@ -104,8 +104,7 @@ Boolean GC_is_thruthy(const void *result)
 }
 
 
-#pragma mark -
-#pragma mark Instance Methods
+#pragma mark - Instance Methods
 
 - (void)analyze
 {
@@ -121,8 +120,7 @@ Boolean GC_is_thruthy(const void *result)
 }
 
 
-#pragma mark -
-#pragma mark Output Helpers
+#pragma mark - Output Helpers
 
 - (void)maybeFinish
 {
@@ -154,7 +152,7 @@ Boolean GC_is_thruthy(const void *result)
   for (i = 0; i < 20 - progressInt; i++)
     printf("▮");
   printf("] Resources: %i/%i loaded - Exceptions: %i - Conditions: %d/%d met\r",
-         resourceID, resourceLoaded, exceptionCount, conditionMet, conditionCount);
+         resourceLoaded, resourceID, exceptionCount, conditionMet, conditionCount);
   
   fflush(stdout);
 }
@@ -177,19 +175,28 @@ Boolean GC_is_thruthy(const void *result)
     printf(UNDERLINE_ON "Page Load"  UNDERLINE_OFF "\n");
     printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec\n", [loadEnd timeIntervalSinceDate:loadStart]);
     
+    // Resources
     printf(UNDERLINE_ON "Resources"  UNDERLINE_OFF "\n");
     if ([resources count]) {
       for (id key in resources) {
         NSDictionary *resource = [resources objectForKey:key];
-        NSTimeInterval interval = [[resource objectForKey:@"finish"] timeIntervalSinceDate:[resource objectForKey:@"start"]];
         NSString *url = ((NSURLRequest *)[resource objectForKey:@"request"]).URL.absoluteString;
-        printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec\t%s\n",
-               interval, [[url squishToLength:SQUISH_LENGTH] UTF8String]);
+        NSError *error = [resource objectForKey:@"error"];
+        
+        if (error != nil)
+          printf("\t" COLOR_RED STRING_FAIL " %s" COLOR_RESET "\t%s\t%s\n",
+                 [[error domain] UTF8String], [[url squishToLength:SQUISH_LENGTH] UTF8String], [[error localizedDescription] UTF8String]);
+        else {
+          NSTimeInterval interval = [[resource objectForKey:@"finish"] timeIntervalSinceDate:[resource objectForKey:@"start"]];
+          printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec\t%s\n",
+                 interval, [[url squishToLength:SQUISH_LENGTH] UTF8String]);
+        }
       }
     }
     else
       printf("\t" COLOR_BLUE STRING_INFO COLOR_RESET " No resources\n");
     
+    // Exceptions
     printf(UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\n");
     if ([exceptions count]) {
       for (NSDictionary *exception in exceptions) {
@@ -203,11 +210,17 @@ Boolean GC_is_thruthy(const void *result)
     else
       printf("\t" COLOR_BLUE STRING_INFO COLOR_RESET " No exceptions\n");
     
+    // Conditions
     printf(UNDERLINE_ON "Conditions" UNDERLINE_OFF "\n");
     if ([_conditions count]) {
       for (GCCondition *condition in _conditions) {
         char *met = condition.met ? COLOR_GREEN STRING_SUCCESS : COLOR_RED STRING_FAIL;
-        printf("\t%s" COLOR_RESET " %f sec\t%s\n", met, condition.interval, [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
+        printf("\t%s" COLOR_RESET " ", met);
+        if (condition.met)
+          printf("%f sec", condition.interval);
+        else
+          printf(COLOR_RED "TIMEOUT" COLOR_RESET);
+        printf("\t%s\n", [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
       }
     }
     else
@@ -217,8 +230,7 @@ Boolean GC_is_thruthy(const void *result)
 }
 
 
-#pragma mark -
-#pragma mark WebView Notifications
+#pragma mark - WebView Notifications
 
 - (void)webViewProgressStarted:(NSNotification *)notification
 {
@@ -240,8 +252,7 @@ Boolean GC_is_thruthy(const void *result)
 }
 
 
-#pragma mark -
-#pragma mark Frame Load Delegate
+#pragma mark - Frame Load Delegate
 
 - (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame
 {
@@ -250,8 +261,7 @@ Boolean GC_is_thruthy(const void *result)
 }
 
 
-#pragma mark -
-#pragma mark Resource Load Delegate
+#pragma mark - Resource Load Delegate
 
 - (id)webView:(WebView *)sender identifierForInitialRequest:(NSURLRequest *)request fromDataSource:(WebDataSource *)dataSource
 {
@@ -280,10 +290,18 @@ Boolean GC_is_thruthy(const void *result)
   [self performSelector:@selector(resourcesMaybeFinishedLoading:) withObject:nil afterDelay:0.5];
 }
 
+- (void)webView:(WebView *)sender resource:(id)identifier didFailLoadingWithError:(NSError *)error fromDataSource:(WebDataSource *)dataSource
+{
+//  NSLog(@"FAILED: %@", error);
+  resourceFailed++;
+  NSMutableDictionary *res = [resources objectForKey:identifier];
+  [res setObject:error forKey:@"error"];
+}
+
 - (void)resourcesMaybeFinishedLoading:(NSNumber *)obj
 {
-  if (resourceLoaded != resourceID && (obj == nil || [obj intValue] < 10)) // XXX Retry for up to 5 seconds
-    [self performSelector:@selector(resourcesMaybeFinishedLoading:) withObject:[NSNumber numberWithInt:0] afterDelay:0.5];
+  if ((resourceLoaded + resourceFailed) != resourceID && (obj == nil || [obj intValue] < 1000)) // XXX Retry for up to 5 seconds
+    [self performSelector:@selector(resourcesMaybeFinishedLoading:) withObject:[NSNumber numberWithInt:[obj intValue] + 1] afterDelay:0.5];
   else {
     state |= GC_state_resources_loaded;
     [self maybeFinish];
@@ -291,8 +309,7 @@ Boolean GC_is_thruthy(const void *result)
 }
 
 
-#pragma mark -
-#pragma mark JavaScript Debugging
+#pragma mark - JavaScript Debugging
 
 - (void)webView:(WebView *)sender didClearWindowObject:(WebScriptObject *)windowObject forFrame:(WebFrame *)frame
 {
@@ -324,8 +341,7 @@ Boolean GC_is_thruthy(const void *result)
 }
 
 
-#pragma mark -
-#pragma mark Condition Testing
+#pragma mark - Condition Testing
 
 -(void)testAllConditionsUntilDone
 {
@@ -370,34 +386,6 @@ Boolean GC_is_thruthy(const void *result)
   condition.interval = [[NSDate date] timeIntervalSinceDate:loadStart];
   if (truthy)
     condition.met = YES;
-}
-
-#pragma mark - WebScriptObject Iterators
-
-+ (NSArray *)arrayWithWebScriptObject:(WebScriptObject *)obj
-{
-  NSMutableArray *ret = [NSMutableArray array];
-  NSUInteger count = [[obj valueForKey:@"length"] integerValue]; //exception occurs if it is associative array.
-  unsigned i;
-  for (i = 0; i < count; i++) {
-    [ret addObject:[obj webScriptValueAtIndex:i]];
-  }
-  return ret;
-}
-
-+ (NSDictionary *)dictionaryWithWebScriptObject:(WebScriptObject *)obj
-                                webScriptObject:(WebScriptObject *)scriptObj
-{
-  NSMutableDictionary *ret= [NSMutableDictionary dictionary];
-  id keys= [scriptObj callWebScriptMethod:@"_f0_"
-                            withArguments:[NSArray arrayWithObjects:obj, nil]];
-  NSArray *keyAry= [self arrayWithWebScriptObject:keys];
-  unsigned i;
-  for(i= 0; i<[keyAry count]; i++) {
-    NSString *key= [keyAry objectAtIndex:i];
-    [ret setObject:[obj valueForKey:key] forKey:key];
-  }
-  return ret;
 }
 
 @end
