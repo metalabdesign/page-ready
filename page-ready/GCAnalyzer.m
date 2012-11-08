@@ -188,8 +188,10 @@ Boolean GC_is_thruthy(const void *result)
                  [[error domain] UTF8String], [[url squishToLength:SQUISH_LENGTH] UTF8String], [[error localizedDescription] UTF8String]);
         else {
           NSTimeInterval interval = [resource.finish timeIntervalSinceDate:resource.start];
-          printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec\t%s\n",
-                 interval, [[url squishToLength:SQUISH_LENGTH] UTF8String]);
+          printf("\t" COLOR_GREEN STRING_SUCCESS COLOR_RESET " %f sec [%s]\t%s\n",
+                 interval,
+                 [[resource humanReadableContentLength] UTF8String],
+                 [[url squishToLength:SQUISH_LENGTH] UTF8String]);
         }
       }
     }
@@ -293,9 +295,15 @@ Boolean GC_is_thruthy(const void *result)
 
 - (void)webView:(WebView *)sender resource:(id)identifier didFailLoadingWithError:(NSError *)error fromDataSource:(WebDataSource *)dataSource
 {
-  resourceFailed++;
   GCResource *resource = [resources objectForKey:identifier];
   resource.error = error;
+  resourceFailed++;
+}
+
+- (void)webView:(WebView *)sender resource:(id)identifier didReceiveContentLength:(NSUInteger)length fromDataSource:(WebDataSource *)dataSource
+{
+  GCResource *resource = [resources objectForKey:identifier];
+  resource.contentLength = (resource.contentLength || 0) + length;
 }
 
 - (void)resourcesMaybeFinishedLoading

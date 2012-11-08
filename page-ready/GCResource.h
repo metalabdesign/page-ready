@@ -10,6 +10,7 @@
 
 @interface GCResource : NSObject
 {
+  NSUInteger    contentLength;
   NSError      *error;
   NSDate       *finish;
   NSNumber     *id;
@@ -17,10 +18,13 @@
   NSDate       *start;
 }
 
+@property          NSUInteger    contentLength;
 @property (retain) NSNumber     *id;
 @property (retain) NSError      *error;
 @property (retain) NSDate       *finish;
 @property (retain) NSURLRequest *request;
 @property (retain) NSDate       *start;
+
+- (NSString *)humanReadableContentLength;
 
 @end
