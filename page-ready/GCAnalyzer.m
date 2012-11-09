@@ -446,7 +446,7 @@ NSString* GC_to_string(const void *result)
   exception.lineno       = lineno;
   exception.sid          = sid;
   
-  if (JSValueIsObject(JSGlobalContextCreate(NULL), [[frame exception] JSObject])) {
+  if ([[frame exception] respondsToSelector:@selector(JSObject)] && JSValueIsObject(JSGlobalContextCreate(NULL), [[frame exception] JSObject])) {
     [[webFrame windowObject] setValue:[frame exception] forKey:@"__GC_frame_exception"];
     id objectRef = [[webFrame windowObject] evaluateWebScript:@"__GC_frame_exception.constructor.name"];
     [[webFrame windowObject] setValue:nil forKey:@"__GC_frame_exception"];
