@@ -227,7 +227,7 @@ NSString* GC_to_string(const void *result)
     printf("\n" UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\n");
     if ([exceptions count]) {
       for (GCException *exception in exceptions) {
-        printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-16s %8s %s:%d\n",
+        printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-18s %8s %s:%d\n",
                [GC_to_string((__bridge const void *)(exception.exception)) UTF8String],
                exception.hasHandler ? "caught" : "uncaught",
                [exception.functionName UTF8String],
@@ -243,10 +243,13 @@ NSString* GC_to_string(const void *result)
       for (GCCondition *condition in _conditions) {
         char *met = condition.met ? COLOR_GREEN STRING_SUCCESS : COLOR_RED STRING_FAIL;
         printf(STRING_INDENT "%s" COLOR_RESET " ", met);
-        if (condition.met)
-          printf("%.5f" COLOR_GREY "sec" COLOR_RESET, condition.interval);
+        if (condition.met) {
+          char interval[24];
+          sprintf(interval,  "%.5f" COLOR_GREY "sec" COLOR_RESET, condition.interval);
+          printf("%-26s", interval);
+        }
         else
-          printf(COLOR_RED "TIMEOUT" COLOR_RESET);
+          printf(COLOR_RED "%-17s" COLOR_RESET, "TIMEOUT");
         printf("  %s\n", [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
       }
     }
