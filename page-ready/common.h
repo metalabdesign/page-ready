@@ -42,4 +42,11 @@
 #define ANALYZER_TIMEOUT_DOUBLE 60.0
 #define ANALYZER_TIMEOUT        STRINGIFY(ANALYZER_TIMEOUT_DOUBLE)
 
+typedef enum {
+  GC_output_silent  = -1,
+  GC_output_normal  =  0,
+  GC_output_verbose =  1,
+  GC_output_json    =  2
+} GC_output;
+
 #endif

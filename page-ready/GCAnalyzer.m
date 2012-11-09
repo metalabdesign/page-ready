@@ -55,7 +55,8 @@ NSString* GC_to_string(const void *result)
   double webViewProgress;
   BOOL   jsDebugging;
   
-  void (^block)(void);
+  void (^finalBlock)(GCAnalyzer *);
+  void (^updateBlock)(GCAnalyzer *);
 
   NSArray             *exceptions;
   NSMutableDictionary *resources;
@@ -70,7 +71,6 @@ NSString* GC_to_string(const void *result)
 
 @synthesize timeout = _timeout;
 @synthesize url     = _url;
-@synthesize verbose = _verbose;
 
 - (id)initWithString:(NSString *)aUrl
 {
@@ -93,18 +93,27 @@ NSString* GC_to_string(const void *result)
     _conditions = [NSArray new];
     _timeout    = @(ANALYZER_TIMEOUT_DOUBLE);
     _url        = aUrl;
-    _verbose    = GC_verbosity_normal;
     
     exceptions = [NSArray new];
     resources  = [NSMutableDictionary dictionaryWithCapacity:0];
     webView    = [WebView new];
-    webView.frameLoadDelegate = self;
+    webView.frameLoadDelegate    = self;
     webView.resourceLoadDelegate = self;
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(webViewProgressStarted:) name:WebViewProgressStartedNotification object:webView];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(webViewProgressEstimate:) name:WebViewProgressEstimateChangedNotification object:webView];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(webViewProgressFinished:) name:WebViewProgressFinishedNotification object:webView];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(webViewProgressStarted:)
+                                                 name:WebViewProgressStartedNotification
+                                               object:webView];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(webViewProgressEstimate:)
+                                                 name:WebViewProgressEstimateChangedNotification
+                                               object:webView];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(webViewProgressFinished:)
+                                                 name:WebViewProgressFinishedNotification
+                                               object:webView];
   }
+  
   return self;
 }
 
@@ -119,20 +128,30 @@ NSString* GC_to_string(const void *result)
   return _conditions;
 }
 
+- (void)onUpdate
+{
+  if (updateBlock)
+    updateBlock(self);
+}
+
 
 #pragma mark - Instance Methods
 
 - (void)analyze
 {
-  if (_verbose != GC_verbosity_silent)
-    printf(BOLD_ON "%s" BOLD_OFF "\n", [[_url absoluteString] UTF8String]);
   [[webView mainFrame] loadRequest:[NSURLRequest requestWithURL:_url]];
 }
 
-- (void)analyzeThen:(void (^)(void))aBlock
+- (void)analyzeAndThen:(void (^)(GCAnalyzer *))_block
 {
-  block = aBlock;
+  finalBlock = _block;
   [self analyze];
+}
+
+- (void)analyzeOnUpdate:(void (^)(GCAnalyzer *))_updateBlock andThen:(void (^)(GCAnalyzer *))_finalBlock
+{
+  updateBlock = _updateBlock;
+  [self analyzeAndThen:_finalBlock];
 }
 
 
@@ -184,20 +203,24 @@ NSString* GC_to_string(const void *result)
   }
 
   NSDictionary *json = [NSDictionary dictionaryWithObjectsAndKeys:
-                        conditionDictionaries, @"conditions",
-                        exceptionDictionaries, @"exceptions",
-                        resourceDictionaries,  @"resources",
-                        @([loadStart timeIntervalSince1970]), @"loadStart",
-                        @([loadEnd   timeIntervalSince1970]), @"loadEnd",
+                        conditionDictionaries,                          @"conditions",
+                        exceptionDictionaries,                          @"exceptions",
+                        resourceDictionaries,                           @"resources",
+                        @([loadStart timeIntervalSince1970]),           @"loadStart",
+                        @([loadEnd   timeIntervalSince1970]),           @"loadEnd",
                         @([loadEnd   timeIntervalSinceDate:loadStart]), @"interval",
-                        _timeout, @"timeout",
+                        _timeout,                                       @"timeout",
+                        _url.absoluteString,                            @"url",
                         nil];
   
-  return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:NULL] encoding:NSUTF8StringEncoding];
+  return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:json
+                                                                        options:NSJSONWritingPrettyPrinted
+                                                                          error:NULL]
+                               encoding:NSUTF8StringEncoding];
 }
 
 
-#pragma mark - Output Helpers
+#pragma mark - Output Methods
 
 - (void)maybeFinish
 {
@@ -208,19 +231,16 @@ NSString* GC_to_string(const void *result)
       (state & GC_state_resources_loaded) &&
       (state & GC_state_conditions_finished)) {
     state |= GC_state_finished;
-    [self printSummary];
-    if (block)
-      block();
+    
+    if (finalBlock)
+      finalBlock(self);
   }
 }
 
-- (void)printStatus:(double)progress
+- (void)printStatus
 {
-  if (_verbose == GC_verbosity_silent)
-    return;
-  
   int i;
-  int progressInt = round(progress * 20.0);
+  int progressInt = round(webViewProgress * 20.0);
   
   printf("Page Load: %i%% [" COLOR_GREEN, progressInt * 5);
   for (i = 0; i < progressInt; i++)
@@ -236,87 +256,90 @@ NSString* GC_to_string(const void *result)
 
 - (void)printSummary
 {
-  if (_verbose == GC_verbosity_silent)
-    return;
-  
   printf("\33[2K\r");
   fflush(stdout);
   
-  if (_verbose == GC_verbosity_normal) {
-    printf(UNDERLINE_ON "Page Load"  UNDERLINE_OFF "\t%fsec\n", [loadEnd timeIntervalSinceDate:loadStart]);
-    printf(UNDERLINE_ON "Resources"  UNDERLINE_OFF "\t%i requested, %i loaded\n", resourceID, resourceLoaded);
-    printf(UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\t%i raised\n", exceptionCount);
-    printf(UNDERLINE_ON "Conditions" UNDERLINE_OFF "\t%d specified, %d met\n", conditionCount, conditionMet);
+  printf(UNDERLINE_ON "Page Load"  UNDERLINE_OFF "\t%fsec\n", [loadEnd timeIntervalSinceDate:loadStart]);
+  printf(UNDERLINE_ON "Resources"  UNDERLINE_OFF "\t%i requested, %i loaded\n", resourceID, resourceLoaded);
+  printf(UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\t%i raised\n", exceptionCount);
+  printf(UNDERLINE_ON "Conditions" UNDERLINE_OFF "\t%d specified, %d met\n", conditionCount, conditionMet);
+  
+  printf("\n");
+}
+
+- (void)printSummaryVerbose
+{
+  printf("\33[2K\r");
+  fflush(stdout);
+  
+  printf(UNDERLINE_ON "Page Load"  UNDERLINE_OFF "\n");
+  printf(STRING_INDENT COLOR_GREEN STRING_SUCCESS COLOR_RESET " %.5f" COLOR_GREY "sec" COLOR_RESET "\n",
+         [loadEnd timeIntervalSinceDate:loadStart]);
+  
+  // Resources
+  printf("\n" UNDERLINE_ON "Resources"  UNDERLINE_OFF "\n");
+  if ([resources count]) {
+    for (id key in resources) {
+      GCResource *resource = [resources objectForKey:key];
+      NSString   *url      = resource.request.URL.absoluteString;
+      NSError    *error    = resource.error;
+      
+      if (error != nil)
+        printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-16s %10s %-*s %s\n",
+               [[error domain] UTF8String],
+               " ",
+               SQUISH_LENGTH + 3,
+               [[url squishToLength:SQUISH_LENGTH] UTF8String],
+               [[error localizedDescription] UTF8String]);
+      else {
+        char interval[24];
+        sprintf(interval, "%.5f" COLOR_GREY "sec" COLOR_RESET, [resource.finish timeIntervalSinceDate:resource.start]);
+        NSArray *size = [resource humanReadableContentLength];
+        printf(STRING_INDENT COLOR_GREEN STRING_SUCCESS COLOR_RESET " %-26s %7s" COLOR_GREY "%-2s" COLOR_RESET " %-*s\n",
+               interval,
+               [[size objectAtIndex:0] UTF8String],
+               [[size objectAtIndex:1] UTF8String],
+               SQUISH_LENGTH + 3,
+               [[url squishToLength:SQUISH_LENGTH] UTF8String]);
+      }
+    }
   }
-  else {
-    printf(UNDERLINE_ON "Page Load"  UNDERLINE_OFF "\n");
-    printf(STRING_INDENT COLOR_GREEN STRING_SUCCESS COLOR_RESET " %.5f" COLOR_GREY "sec" COLOR_RESET "\n",
-           [loadEnd timeIntervalSinceDate:loadStart]);
-    
-    // Resources
-    printf("\n" UNDERLINE_ON "Resources"  UNDERLINE_OFF "\n");
-    if ([resources count]) {
-      for (id key in resources) {
-        GCResource *resource = [resources objectForKey:key];
-        NSString *url = resource.request.URL.absoluteString;
-        NSError *error = resource.error;
-        
-        if (error != nil)
-          printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-16s %10s %-*s %s\n",
-                 [[error domain] UTF8String],
-                 " ",
-                 SQUISH_LENGTH + 3,
-                 [[url squishToLength:SQUISH_LENGTH] UTF8String],
-                 [[error localizedDescription] UTF8String]);
-        else {
-          char interval[24];
-          sprintf(interval, "%.5f" COLOR_GREY "sec" COLOR_RESET, [resource.finish timeIntervalSinceDate:resource.start]);
-          NSArray *size = [resource humanReadableContentLength];
-          printf(STRING_INDENT COLOR_GREEN STRING_SUCCESS COLOR_RESET " %-26s %7s" COLOR_GREY "%-2s" COLOR_RESET " %-*s\n",
-                 interval,
-                 [[size objectAtIndex:0] UTF8String],
-                 [[size objectAtIndex:1] UTF8String],
-                 SQUISH_LENGTH + 3,
-                 [[url squishToLength:SQUISH_LENGTH] UTF8String]);
-        }
-      }
+  else
+    printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No resources\n");
+  
+  // Exceptions
+  printf("\n" UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\n");
+  if ([exceptions count]) {
+    for (GCException *exception in exceptions) {
+      printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-18s %8s %s:%d\n",
+             [GC_to_string((__bridge const void *)(exception.exception)) UTF8String],
+             exception.hasHandler ? "caught" : "uncaught",
+             [exception.functionName UTF8String],
+             exception.lineno);
     }
-    else
-      printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No resources\n");
-    
-    // Exceptions
-    printf("\n" UNDERLINE_ON "Exceptions" UNDERLINE_OFF "\n");
-    if ([exceptions count]) {
-      for (GCException *exception in exceptions) {
-        printf(STRING_INDENT COLOR_RED STRING_FAIL COLOR_RESET " %-18s %8s %s:%d\n",
-               [GC_to_string((__bridge const void *)(exception.exception)) UTF8String],
-               exception.hasHandler ? "caught" : "uncaught",
-               [exception.functionName UTF8String],
-               exception.lineno);
-      }
-    }
-    else
-      printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No exceptions\n");
-    
-    // Conditions
-    printf("\n" UNDERLINE_ON "Conditions" UNDERLINE_OFF "\n");
-    if ([_conditions count]) {
-      for (GCCondition *condition in _conditions) {
-        char *met = condition.met ? COLOR_GREEN STRING_SUCCESS : COLOR_RED STRING_FAIL;
-        printf(STRING_INDENT "%s" COLOR_RESET " ", met);
-        if (condition.met) {
-          char interval[24];
-          sprintf(interval,  "%.5f" COLOR_GREY "sec" COLOR_RESET, condition.interval);
-          printf("%-26s", interval);
-        }
-        else
-          printf(COLOR_RED "%-17s" COLOR_RESET, "TIMEOUT");
-        printf("  %s\n", [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
-      }
-    }
-    else
-      printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No conditions\n");
   }
+  else
+    printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No exceptions\n");
+  
+  // Conditions
+  printf("\n" UNDERLINE_ON "Conditions" UNDERLINE_OFF "\n");
+  if ([_conditions count]) {
+    for (GCCondition *condition in _conditions) {
+      char *met = condition.met ? COLOR_GREEN STRING_SUCCESS : COLOR_RED STRING_FAIL;
+      printf(STRING_INDENT "%s" COLOR_RESET " ", met);
+      if (condition.met) {
+        char interval[24];
+        sprintf(interval,  "%.5f" COLOR_GREY "sec" COLOR_RESET, condition.interval);
+        printf("%-26s", interval);
+      }
+      else
+        printf(COLOR_RED "%-17s" COLOR_RESET, "TIMEOUT");
+      printf("  %s\n", [[[condition expr] squishToLength:SQUISH_LENGTH] UTF8String]);
+    }
+  }
+  else
+    printf(STRING_INDENT COLOR_BLUE STRING_INFO COLOR_RESET " No conditions\n");
+  
   printf("\n");
 }
 
@@ -326,20 +349,20 @@ NSString* GC_to_string(const void *result)
 - (void)webViewProgressStarted:(NSNotification *)notification
 {
   loadStart = [NSDate date];
-  [self printStatus:webViewProgress];
+  [self onUpdate];
   [self testAllConditionsUntilDone];
 }
 
 - (void)webViewProgressEstimate:(NSNotification *)notification
 {
   webViewProgress = [notification.object estimatedProgress];
-  [self printStatus:webViewProgress];
+  [self onUpdate];
 }
 
 - (void)webViewProgressFinished:(NSNotification *)notification
 {
   loadEnd = [NSDate date];
-  [self printStatus:webViewProgress];
+  [self onUpdate];
 }
 
 
@@ -367,7 +390,7 @@ NSString* GC_to_string(const void *result)
   resource.start   = [NSDate date];
   [resources setObject:resource forKey:identifier];
   
-  [self printStatus:webViewProgress];
+  [self onUpdate];
   
   return request;
 }
@@ -378,7 +401,7 @@ NSString* GC_to_string(const void *result)
   resource.finish = [NSDate date];
   resourceLoaded++;
   
-  [self printStatus:webViewProgress];
+  [self onUpdate];
   [self performSelector:@selector(resourcesMaybeFinishedLoading) withObject:nil afterDelay:0.5];
 }
 
@@ -436,7 +459,7 @@ NSString* GC_to_string(const void *result)
   exceptionCount++;
   exceptions = [exceptions arrayByAddingObject:exception];
   
-  [self printStatus:webViewProgress];
+  [self onUpdate];
 }
 
 

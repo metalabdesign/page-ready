@@ -17,10 +17,11 @@
 
 // Init
 const char *prog;
-static GC_verbosity verbose = GC_verbosity_normal;
+static GC_output output = GC_output_normal;
 static struct option longOptions[] = {
-  {"verbose",   no_argument,       &verbose,  1},
-  {"silent",    no_argument,       &verbose, -1},
+  {"verbose",   no_argument,       &output,  1},
+  {"silent",    no_argument,       &output, -1},
+  {"json",      no_argument,       &output,  2},
   {"help",      no_argument,       0, 'h'},
   {"condition", required_argument, 0, 'c'},
   {"timeout",   required_argument, 0, 't'},
@@ -33,7 +34,7 @@ BOOL shouldKeepRunning = YES;
 // Forward Declarations
 void usage();
 
-void next(NSEnumerator *e, NSArray *conditions, NSNumber *timeout, GC_verbosity verbose);
+void next(NSEnumerator *e, NSArray *conditions, NSNumber *timeout, NSArray *analyzers, GC_output output);
 
 
 // Main
@@ -47,7 +48,7 @@ int main(int argc, const char **argv)
   // Option Parsing
   while (1) {
     int optionIndex = 0;
-    int c = getopt_long(argc, (char *const*)argv, "hc:t:", longOptions, &optionIndex);
+    int c = getopt_long(argc, (char *const*)argv, "hjc:t:", longOptions, &optionIndex);
     GCCondition *cond;
     
     if (c == -1)
@@ -76,6 +77,10 @@ int main(int argc, const char **argv)
         cond.interval = 0.0;
         cond.met      = NO;
         [conditions addObject:cond];
+        break;
+        
+      case 'j':
+        output = GC_output_json;
         break;
         
       case 't':
@@ -121,7 +126,7 @@ int main(int argc, const char **argv)
     free(timeoutString);
     
     NSEnumerator *urlEnumerator = [urls objectEnumerator];
-    next(urlEnumerator, conditions, timeout, verbose);
+    next(urlEnumerator, conditions, timeout, [NSArray new], output);
     
     while (shouldKeepRunning && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
   }
@@ -129,31 +134,54 @@ int main(int argc, const char **argv)
 }
 
 
-void next(NSEnumerator *e, NSArray *conditions, NSNumber *timeout, GC_verbosity verbose)
+void next(NSEnumerator *e, NSArray *conditions, NSNumber *timeout, NSArray *analyzers, GC_output output)
 {
   NSString *url;
+  BOOL canOutput = !(output == GC_output_silent || output == GC_output_json);
+  
   if (url = [e nextObject]) {
+    if (canOutput)
+      printf(BOLD_ON "%s" BOLD_OFF "\n", [url UTF8String]);
+    
     GCAnalyzer *an = [[GCAnalyzer alloc] initWithString:url];
-    an.timeout = timeout;
     an.conditions = conditions;
-    an.verbose = verbose;
-    [an analyzeThen:^(){
-      next(e, conditions, timeout, verbose);
-    }];
+    an.timeout    = timeout;
+    
+    [an analyzeOnUpdate:^(GCAnalyzer *analyzer){ if (canOutput) [analyzer printStatus]; }
+                andThen:^(GCAnalyzer *analyzer){
+                  if (canOutput) {
+                    if (output == GC_output_normal)
+                      [analyzer printSummary];
+                    else
+                      [analyzer printSummaryVerbose];
+                  }
+                  next(e, conditions, timeout, [analyzers arrayByAddingObject:analyzer], output);
+                }];
   }
-  else
+  else {
+    if (output == GC_output_json) {
+      NSMutableArray *json = [NSMutableArray new];
+      for (GCAnalyzer *analyzer in analyzers) {
+        [json addObject:[analyzer toJSON]];
+      }
+      NSString *jsonString = [json componentsJoinedByString:@",\n"];
+      printf("[%s]", [jsonString UTF8String]);
+    }
     exit(EXIT_SUCCESS);
+  }
 }
 
 
 void usage()
 {
-  fprintf(stderr, "Usage: %s [-h] [--silent | --verbose] [-t seconds] [-c expr] url ...\n\n", prog);
+  fprintf(stderr, "Usage: %s [-hj] [--silent | --verbose | --json] [-t seconds] [-c expr] url ...\n\n", prog);
   fprintf(stderr, "    Options:\n");
   fprintf(stderr, "        -c expr, --condition=expr\n");
   fprintf(stderr, "            Javascript expression to be used as a test condition. Multiple expressions may be included.\n\n");
   fprintf(stderr, "        -h, --help\n");
   fprintf(stderr, "            Display this help message.\n\n");
+  fprintf(stderr, "        -j, --json\n");
+  fprintf(stderr, "            Instead of a text report, return the analysis as JSON.\n\n");
   fprintf(stderr, "        -t seconds, --timeout=seconds\n");
   fprintf(stderr, "            Timeout in seconds for condition to be met within. Default: %s\n\n", ANALYZER_TIMEOUT);
   fprintf(stderr, "        --silent\n");
@@ -166,7 +194,7 @@ void usage()
   fprintf(stderr, "        %s http://google.com\n\n", prog);
   fprintf(stderr, "        %s -c \"someFunc()\" -c \"anotherFunc()\" -c \"thirdFunc()\" http://wesbos.com http://darcyclarke.me\n\n", prog);
   fprintf(stderr, "        %s -c \"document.readyState == 'complete'\" -t 2.5 http://gf3.ca\n\n", prog);
-  fprintf(stderr, "        %s --verbose -c \"`cat ./yourFile.js`\" http://metalabdesign.com\n", prog);
+  fprintf(stderr, "        %s --verbose http://metalabdesign.com < cat your_file.js\n", prog);
   
   exit(EX_USAGE);
 }

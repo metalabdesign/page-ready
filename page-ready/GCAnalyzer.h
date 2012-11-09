@@ -19,12 +19,6 @@
 #import "NSString+Squisher.h"
 
 typedef enum {
-  GC_verbosity_silent  = -1,
-  GC_verbosity_normal  = 0,
-  GC_verbosity_verbose = 1
-} GC_verbosity;
-
-typedef enum {
   GC_state_page_loaded         = 0x01,
   GC_state_resources_loaded    = 0x02,
   GC_state_conditions_finished = 0x04,
@@ -36,13 +30,11 @@ typedef enum {
   NSURL        *_url;
   NSNumber     *_timeout;
   NSArray      *_conditions;
-  GC_verbosity  _verbose;
 }
 
 @property (readonly) NSURL        *url;
 @property            NSNumber     *timeout;
 @property            NSArray      *conditions;
-@property            GC_verbosity  verbose;
 
 - (id)initWithString:(NSString*)aUrl;
 
@@ -50,8 +42,16 @@ typedef enum {
 
 - (void)analyze;
 
-- (void)analyzeThen:(void (^)(void))block;
+- (void)analyzeAndThen:(void (^)(GCAnalyzer *))block;
+
+- (void)analyzeOnUpdate:(void (^)(GCAnalyzer *))updateBlock andThen:(void (^)(GCAnalyzer *))finalBlock;
 
 - (NSString *)toJSON;
+
+- (void)printStatus;
+
+- (void)printSummary;
+
+- (void)printSummaryVerbose;
 
 @end
