@@ -15,7 +15,7 @@ This tool depends on the frameworks in [WebKit Nightly](http://nightly.webkit.or
 Downloading
 -----------
 
-With each release a new binary is uploaded and can be found in the [downloads section](https://github.com/metalabdesign/page-ready/downloads).
+With each release a new binary compiled for OS X 10.8 is uploaded and can be found in the [downloads section](https://github.com/metalabdesign/page-ready/downloads).
 
 
 Compiling
