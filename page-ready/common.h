@@ -9,7 +9,7 @@
 #ifndef Page_Ready_common_h
 #define Page_Ready_common_h
 
-#define PAGE_READY_VERSION "0.3.0"
+#define PAGE_READY_VERSION "0.3.1"
 
 #define PAGE_READY_BUF_SIZE 4096
 
