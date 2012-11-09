@@ -52,4 +52,6 @@ typedef enum {
 
 - (void)analyzeThen:(void (^)(void))block;
 
+- (NSString *)toJSON;
+
 @end

@@ -136,6 +136,67 @@ NSString* GC_to_string(const void *result)
 }
 
 
+#pragma mark - JSON Encoder
+
+- (NSString *)toJSON
+{
+  NSMutableArray *conditionDictionaries = [NSMutableArray new];
+  NSMutableArray *exceptionDictionaries = [NSMutableArray new];
+  NSMutableArray *resourceDictionaries  = [NSMutableArray new];
+  
+  // Conditions
+  for (GCCondition *condition in _conditions) {
+    [conditionDictionaries addObject:@{
+     @"attempts":   condition.attempts,
+     @"expr":       condition.expr,
+     @"interval":   @(condition.interval),
+     @"met":        [NSNumber numberWithBool:condition.met]
+     }];
+  }
+  
+  // Exceptions
+  for (GCException *exception in exceptions) {
+    [exceptionDictionaries addObject:@{
+      /*@"caller": exception.caller,*/
+     @"exception":    GC_to_string((__bridge const void *)(exception.exception)),
+     @"functionName": exception.functionName ?: @"(null)",
+     @"hasHandler":   [NSNumber numberWithBool:exception.hasHandler],
+     @"lineno":       @(exception.lineno)
+    }];
+  }
+ 
+  // Resources
+  for (id key in resources) {
+    GCResource *resource = resources[key];
+    NSMutableDictionary *dicks = [NSMutableDictionary dictionaryWithDictionary:@{
+     @"contentLength": @(resource.contentLength),
+     @"id":            resource.id,
+     @"finish":        @([resource.finish timeIntervalSince1970]),
+     @"interval":      @([resource.finish timeIntervalSinceDate:resource.start]),
+     @"url":           resource.request.URL.absoluteString,
+     @"start":         @([resource.start timeIntervalSince1970])
+     }];
+    
+    if (resource.error != nil)
+      dicks[@"error"] = @{@"domain": resource.error.domain, @"localizedDescription": resource.error.localizedDescription};
+    
+    [resourceDictionaries addObject:dicks];
+  }
+
+  NSDictionary *json = [NSDictionary dictionaryWithObjectsAndKeys:
+                        conditionDictionaries, @"conditions",
+                        exceptionDictionaries, @"exceptions",
+                        resourceDictionaries,  @"resources",
+                        @([loadStart timeIntervalSince1970]), @"loadStart",
+                        @([loadEnd   timeIntervalSince1970]), @"loadEnd",
+                        @([loadEnd   timeIntervalSinceDate:loadStart]), @"interval",
+                        _timeout, @"timeout",
+                        nil];
+  
+  return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:NULL] encoding:NSUTF8StringEncoding];
+}
+
+
 #pragma mark - Output Helpers
 
 - (void)maybeFinish

@@ -26,6 +26,4 @@
 @property          int                 lineno;
 @property          WebSourceId         sid;
 
-
-
 @end
