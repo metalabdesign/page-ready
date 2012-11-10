@@ -13,6 +13,14 @@
 
 @synthesize contentLength, error, finish, id, request, start;
 
+- (id)init
+{
+  if ((self = [super init])) {
+    contentLength = 0;
+  }
+  return self;
+}
+
 - (NSArray *)humanReadableContentLength
 {
   if (!contentLength)

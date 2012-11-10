@@ -90,15 +90,19 @@ NSString* GC_to_string(const void *result)
     webViewProgress = 0.0;
     jsDebugging     = YES; // TODO Make this optional
     
-    _conditions = [NSArray new];
-    _timeout    = @(ANALYZER_TIMEOUT_DOUBLE);
-    _url        = aUrl;
+    _conditions      = [NSArray new];
+    _timeout         = @(ANALYZER_TIMEOUT_DOUBLE);
+    _url             = aUrl;
+    _usePageCache    = NO;
     
     exceptions = [NSArray new];
     resources  = [NSMutableDictionary dictionaryWithCapacity:0];
     webView    = [WebView new];
-    webView.frameLoadDelegate    = self;
-    webView.resourceLoadDelegate = self;
+    webView.frameLoadDelegate     = self;
+    webView.resourceLoadDelegate  = self;
+    webView.preferencesIdentifier = @"GCAnalyzer"; // Should this be unique?
+    webView.preferences.usesPageCache          =  _usePageCache;
+    webView.preferences.privateBrowsingEnabled = !_usePageCache;
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(webViewProgressStarted:)
@@ -126,6 +130,18 @@ NSString* GC_to_string(const void *result)
 - (NSArray *)conditions
 {
   return _conditions;
+}
+
+- (void)setUsePageCache:(BOOL)usePageCache
+{
+  _usePageCache                              =  usePageCache;
+  webView.preferences.usesPageCache          =  usePageCache;
+  webView.preferences.privateBrowsingEnabled = !usePageCache;
+}
+
+- (BOOL)usePageCache
+{
+  return _usePageCache;
 }
 
 - (void)onUpdate
@@ -415,7 +431,7 @@ NSString* GC_to_string(const void *result)
 - (void)webView:(WebView *)sender resource:(id)identifier didReceiveContentLength:(NSUInteger)length fromDataSource:(WebDataSource *)dataSource
 {
   GCResource *resource = [resources objectForKey:identifier];
-  resource.contentLength = (resource.contentLength || 0) + length;
+  resource.contentLength = resource.contentLength + length;
 }
 
 - (void)resourcesMaybeFinishedLoading

@@ -27,14 +27,16 @@ typedef enum {
 
 @interface GCAnalyzer : NSObject
 {
-  NSURL        *_url;
-  NSNumber     *_timeout;
-  NSArray      *_conditions;
+  NSArray  *_conditions;
+  NSNumber *_timeout;
+  NSURL    *_url;
+  BOOL      _usePageCache;
 }
 
-@property (readonly) NSURL        *url;
-@property            NSNumber     *timeout;
-@property            NSArray      *conditions;
+@property            NSArray  *conditions;
+@property            NSNumber *timeout;
+@property (readonly) NSURL    *url;
+@property            BOOL      usePageCache;
 
 - (id)initWithString:(NSString*)aUrl;
 
