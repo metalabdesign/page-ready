@@ -428,7 +428,7 @@ NSString* GC_to_string(const void *result)
   resourceFailed++;
 }
 
-- (void)webView:(WebView *)sender resource:(id)identifier didReceiveContentLength:(NSUInteger)length fromDataSource:(WebDataSource *)dataSource
+- (void)webView:(WebView *)sender resource:(id)identifier didReceiveContentLength:(NSInteger)length fromDataSource:(WebDataSource *)dataSource
 {
   GCResource *resource = [resources objectForKey:identifier];
   resource.contentLength = resource.contentLength + length;
