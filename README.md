@@ -10,6 +10,8 @@ when they're true. This would allow you, for instance, to determine when
 a specific view is loaded and in the DOM, or when dynamically-fetched content
 is actually visible to the user, &c…
 
+![example run](http://f.cl.ly/items/1X3r470U2D0K080P453J/page_ready.PNG)
+
 
 Prerequisites
 -------------
@@ -36,7 +38,45 @@ clicking Product → Build (⌘B).
 Usage
 -----
 
-Usage instructions are included with the tool.
+```
+Usage: page-ready [-hjp] [--silent | --verbose | --json] [-t seconds] [-c expr] url ...
+
+    Options:
+        -c expr, --condition=expr
+            Javascript expression to be used as a test condition. Multiple expressions may be included.
+
+        -h, --help
+            Display this help message.
+
+        -j, --json
+            Instead of a text report, return the analysis as JSON.
+
+        -p, --cache
+            Enable the page cache. Disabled by default.
+
+        -t seconds, --timeout=seconds
+            Timeout in seconds for condition to be met within. Default: 60.0
+
+        --silent
+            No output.
+
+        --verbose
+            More detailed output.
+
+        --version
+            Show version number and quit.
+
+    Examples:
+        page-ready http://google.com
+
+        page-ready -c "someFunc()" -c "anotherFunc()" -c "thirdFunc()" http://wesbos.com http://darcyclarke.me
+
+        page-ready -c "document.readyState == 'complete'" -t 2.5 http://gf3.ca
+
+        page-ready --verbose http://metalabdesign.com < cat your_file.js
+```
+
+Usage instructions can also be viewed with the tool:
 
 ```sh
 ./page-ready -h
